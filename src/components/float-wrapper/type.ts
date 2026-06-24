@@ -7,7 +7,12 @@ export type AnchorPoint =
   | "middle-right"
   | "bottom-right";
 
+export type BoundaryType = "window" | "ref_object" | "bounding_box";
+export interface Coordinates {
+  x: number;
+  y: number;
+}
 export type CustomAnchor = {
   name: string;
-  coordinates: { x: string; y: string };
+  coordinates: Coordinates;
 };

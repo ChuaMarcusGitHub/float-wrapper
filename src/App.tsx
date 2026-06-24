@@ -12,7 +12,7 @@ function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <motion.div >
+    <motion.div ref={constraintsRef}>
       <section id="center">
         <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
@@ -34,7 +34,7 @@ function App() {
         </button>
       </section>
 
-      <FloatWrapper >
+      <FloatWrapper defaultPosition="center">
         <CircleButton title={"potato"} />
       </FloatWrapper>
     </motion.div>
