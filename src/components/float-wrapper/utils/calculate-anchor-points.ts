@@ -1,6 +1,6 @@
 import React from "react";
 import type { BoundingBox } from "framer-motion";
-import type { AnchorPoint, BoundaryType, Coordinates } from "./type";
+import type { AnchorPoint, BoundaryType, Coordinates } from "../type";
 
 const PADDING = 16;
 type boundaryArgs = {
@@ -10,6 +10,19 @@ type boundaryArgs = {
     | React.RefObject<HTMLElement | null>
     | undefined;
 };
+/**
+ * Calculates the seven default anchor point offsets for the floatable element,
+ * relative to its initial rendered position.
+ *
+ * The active boundary type determines which calculation strategy is used:
+ * - `window` — constrained to the viewport
+ * - `ref_object` — constrained to a container element via ref
+ * - `bounding_box` — constrained to explicit Framer Motion offset values
+ *
+ * @param args - The floatable element and its drag constraints
+ * @param boundaryType - Which boundary strategy to apply
+ * @returns A record mapping each `AnchorPoint` to its resolved `{ x, y }` offset
+ */
 export const calculateAnchorPoints = (
   args: boundaryArgs,
   boundaryType: BoundaryType,
@@ -29,6 +42,10 @@ export const calculateAnchorPoints = (
   }
 };
 
+/**
+ * Derives anchor offsets using the viewport as the boundary.
+ * All values are relative to the element's initial position with `PADDING` inset.
+ */
 const calculateWindowBoundary = (
   el: HTMLDivElement,
 ): Record<AnchorPoint, Coordinates> => {
@@ -60,6 +77,10 @@ const calculateWindowBoundary = (
   };
 };
 
+/**
+ * Derives anchor offsets directly from a Framer Motion `BoundingBox`.
+ * Values are already relative offsets so no positional conversion is needed.
+ */
 const calculateBoundingBoxBoundary = (
   dragConstraints: Partial<BoundingBox>,
 ): Record<AnchorPoint, Coordinates> => {
@@ -86,6 +107,11 @@ const calculateBoundingBoxBoundary = (
   };
 };
 
+/**
+ * Derives anchor offsets using a container ref as the boundary.
+ * Offsets are calculated relative to the element's initial position within the container.
+ * Falls back to window boundary if the ref is not yet attached.
+ */
 const calculateRefObjectBoundary = (
   el: HTMLDivElement,
   dragConstraints: React.RefObject<HTMLElement>,

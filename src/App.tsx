@@ -34,7 +34,14 @@ function App() {
         </button>
       </section>
 
-      <FloatWrapper defaultPosition="center">
+      <FloatWrapper
+        defaultPosition={'custom_1'}
+        anchorProps={{
+          customAnchors: [
+            { name: "custom_1", coordinates: { x: "100", y: "-10px" } },
+          ],
+        }}
+      >
         <CircleButton title={"potato"} />
       </FloatWrapper>
     </motion.div>

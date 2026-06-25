@@ -9,8 +9,8 @@ export type AnchorPoint =
 
 export type BoundaryType = "window" | "ref_object" | "bounding_box";
 export interface Coordinates {
-  x: number;
-  y: number;
+  x: number | string;
+  y: number | string;
 }
 export type CustomAnchor = {
   name: string;

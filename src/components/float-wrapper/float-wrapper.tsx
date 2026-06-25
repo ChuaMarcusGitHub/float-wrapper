@@ -11,13 +11,18 @@ import React, {
   useState,
   type RefObject,
 } from "react";
+import { calculateAnchorPoints, transformAnchorPoints } from "./utils";
 import { debounce } from "../../utils/debounce"; // TODO: REPLACE WITH PROJECT'S DEBOUNCE IMPORT
-import type { AnchorPoint, BoundaryType, Coordinates } from "./type";
-import { calculateAnchorPoints } from "./calculate-anchor-points";
+import type {
+  AnchorPoint,
+  BoundaryType,
+  Coordinates,
+  CustomAnchor,
+} from "./type";
 
 const PADDING = 16;
 interface FloatWrapperProps {
-  defaultPosition?: AnchorPoint;
+  defaultPosition?: AnchorPoint | string;
   dragConstraints?: Partial<BoundingBox> | RefObject<HTMLElement | null>;
   children: React.ReactNode;
   handleStartDrag?: () => void;
@@ -25,6 +30,7 @@ interface FloatWrapperProps {
   anchorProps?: {
     shouldAnchor?: boolean;
     excludeAnchors?: AnchorPoint[];
+    customAnchors?: CustomAnchor[];
   };
 }
 
@@ -34,6 +40,7 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
   dragConstraints,
   handleStartDrag,
   handleStopDrag,
+  anchorProps,
 }) => {
   const motionX = useMotionValue(0);
   const motionY = useMotionValue(0);
@@ -42,13 +49,9 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
   const [windowConstraints, setWindowContraints] =
     useState<Partial<BoundingBox>>();
   const [anchorPoints, setAnchorPoints] = useState<Record<
-    AnchorPoint,
+    AnchorPoint | string,
     Coordinates
   > | null>();
-
-  const setToAnchorPoint = () => {
-    // take elementRef.current's
-  };
 
   const handleResize = useCallback(() => {
     const el = elementRef.current;
@@ -63,8 +66,9 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
   }, []);
 
   const handleAnchorPoints = useCallback(() => {
-    const el = elementRef.current;
-    if (!el) return;
+    const element = elementRef.current;
+    if (!element) return;
+
     // Checks if custom boundaries are used, helps determine the anchor points for the floater
     let boundaryType: BoundaryType;
     if (!dragConstraints) {
@@ -74,12 +78,29 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
     } else {
       boundaryType = "bounding_box";
     }
+
     const anchorRecords = calculateAnchorPoints(
-      { element: el, dragConstraints },
+      { element, dragConstraints },
       boundaryType,
     );
-    setAnchorPoints(anchorRecords);
-  }, [dragConstraints]);
+
+    if (anchorProps?.customAnchors) {
+      // Perform conversion of custom anchors to a standardized offset value
+      const convertedCustomAnchorRecords: Record<string, Coordinates> =
+        transformAnchorPoints(anchorProps.customAnchors, {
+          boundaryType,
+          element,
+          dragConstraints,
+        });
+      console.log(`[debug] confirmed anchorpoints: `, {
+        ...anchorRecords,
+        ...convertedCustomAnchorRecords,
+      });
+      setAnchorPoints({ ...anchorRecords, ...convertedCustomAnchorRecords });
+    } else {
+      setAnchorPoints(anchorRecords);
+    }
+  }, [anchorProps, dragConstraints]);
 
   useEffect(() => {
     // Fallback when no custom boundaries are passed in
@@ -104,8 +125,17 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
   useEffect(() => {
     if (!defaultPosition || !anchorPoints) return;
     const target = anchorPoints[defaultPosition] ?? anchorPoints["center"];
-    animate(motionX, target.x, { type: "spring", stiffness: 300, damping: 30 });
-    animate(motionY, target.y, { type: "spring", stiffness: 300, damping: 30 });
+    // Perform movement towards anchorpoint
+    animate(motionX, target.x as number, {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    });
+    animate(motionY, target.y as number, {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    });
   }, [anchorPoints, defaultPosition, motionX, motionY]);
 
   /* 
