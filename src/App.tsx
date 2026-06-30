@@ -35,10 +35,10 @@ function App() {
       </section>
 
       <FloatWrapper
-        defaultPosition={'custom_1'}
+        defaultPosition={"custom_1"}
         anchorProps={{
           customAnchors: [
-            { name: "custom_1", coordinates: { x: "100", y: "-10px" } },
+            { name: "custom_1", coordinates: { x: "30%", y: "-10px" } },
           ],
         }}
       >

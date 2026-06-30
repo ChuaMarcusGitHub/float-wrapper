@@ -18,9 +18,13 @@ import type {
   BoundaryType,
   Coordinates,
   CustomAnchor,
+  ExcludeAnchorList,
 } from "./type";
+import { useCalculateNearestAnchor } from "./hook";
+import { defaultAnimate } from "./constants";
 
 const PADDING = 16;
+
 interface FloatWrapperProps {
   defaultPosition?: AnchorPoint | string;
   dragConstraints?: Partial<BoundingBox> | RefObject<HTMLElement | null>;
@@ -29,9 +33,10 @@ interface FloatWrapperProps {
   handleStopDrag?: () => void;
   anchorProps?: {
     shouldAnchor?: boolean;
-    excludeAnchors?: AnchorPoint[];
+    excludeAnchors?: ExcludeAnchorList[];
     customAnchors?: CustomAnchor[];
   };
+  onMovingChange?: (isMoving: boolean) => void;
 }
 
 export const FloatWrapper: React.FC<FloatWrapperProps> = ({
@@ -41,17 +46,43 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
   handleStartDrag,
   handleStopDrag,
   anchorProps,
+  onMovingChange,
 }) => {
   const motionX = useMotionValue(0);
   const motionY = useMotionValue(0);
 
   const elementRef = useRef<HTMLDivElement | null>(null);
+
   const [windowConstraints, setWindowContraints] =
     useState<Partial<BoundingBox>>();
   const [anchorPoints, setAnchorPoints] = useState<Record<
     AnchorPoint | string,
     Coordinates
   > | null>();
+
+  const { calculateClosestAnchor } = useCalculateNearestAnchor({
+    anchorPoints: anchorPoints ?? null,
+    shouldAnchor: anchorProps?.shouldAnchor,
+    excludeAnchors: anchorProps?.excludeAnchors,
+    motion: { x: motionX, y: motionY },
+  });
+
+  const snapToAnchor = async () => {
+    const closestAnchor = calculateClosestAnchor();
+    if (!closestAnchor) return;
+
+    const { x, y } = closestAnchor;
+
+    console.log(`[debug] Snap Found: `, closestAnchor);
+    onMovingChange?.(true);
+
+    await Promise.all([
+      animate(motionX, Number(x), { ...defaultAnimate }),
+      animate(motionY, Number(y), { ...defaultAnimate }),
+    ]);
+
+    onMovingChange?.(false);
+  };
 
   const handleResize = useCallback(() => {
     const el = elementRef.current;
@@ -126,16 +157,8 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
     if (!defaultPosition || !anchorPoints) return;
     const target = anchorPoints[defaultPosition] ?? anchorPoints["center"];
     // Perform movement towards anchorpoint
-    animate(motionX, target.x as number, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    });
-    animate(motionY, target.y as number, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    });
+    animate(motionX, target.x as number, { ...defaultAnimate });
+    animate(motionY, target.y as number, { ...defaultAnimate });
   }, [anchorPoints, defaultPosition, motionX, motionY]);
 
   /* 
@@ -147,8 +170,12 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
     handleStartDrag?.(); // dev custom handler
   };
 
-  const onStopDrag = () => {
+  const onStopDrag = async () => {
     handleStopDrag?.(); // dev custom handler
+
+    if (anchorProps?.shouldAnchor) {
+      await snapToAnchor();
+    }
   };
 
   return (

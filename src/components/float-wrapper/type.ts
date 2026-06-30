@@ -8,6 +8,7 @@ export type AnchorPoint =
   | "bottom-right";
 
 export type BoundaryType = "window" | "ref_object" | "bounding_box";
+export type ExcludeAnchorList = AnchorPoint & string; // for custom anchors
 export interface Coordinates {
   x: number | string;
   y: number | string;
