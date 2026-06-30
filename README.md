@@ -1,77 +1,88 @@
-# React + TypeScript + Vite
+# FloatWrapper
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React component that wraps its children to make them freely draggable on screen. The wrapped element can either move freely based on user interaction, or snap to predefined anchor points on drag release.
 
-Currently, two official plugins are available:
+Built on top of [Framer Motion](https://www.framer.com/motion/).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+- Wraps any React children in a draggable, fixed-position container
+- Constrains drag boundaries to the viewport, a container ref, or an explicit bounding box
+- Supports 7 default anchor points (`top-left`, `middle-left`, `bottom-left`, `center`, `top-right`, `middle-right`, `bottom-right`)
+- Supports custom anchor points defined in pixels, percentages, or raw numbers
+- Optionally snaps to the nearest anchor on drag release
+- Optionally positions the element at a specific anchor on mount via `defaultPosition`
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Usage
 
-Note: This will impact Vite dev & build performances.
+For usage in your own project, copy the `float-wrapper` folder into your desired directory. Note that you own the code from that point — updates to this repo will not automatically reflect in your copy.
 
-## Expanding the ESLint configuration
+### Debounce
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+`FloatWrapper` uses a debounce utility for resize handling. A stub implementation is provided in `src/utils/debounce`. You can either use it as-is, or replace the import in `float-wrapper.tsx` with your own debounce (e.g. from `lodash`):
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```ts
+// float-wrapper.tsx
+import { debounce } from 'lodash'; // replace with your preferred debounce
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Basic floating button
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```tsx
+import { FloatWrapper } from './components/float-wrapper';
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+export default function App() {
+  return (
+    <FloatWrapper>
+      <button>Click me</button>
+    </FloatWrapper>
+  );
+}
 ```
+
+The button is now freely draggable within the viewport.
+
+### Snap to nearest anchor on drag release
+
+```tsx
+<FloatWrapper
+  defaultPosition="bottom-right"
+  anchorProps={{ shouldAnchor: true }}
+>
+  <button>Click me</button>
+</FloatWrapper>
+```
+
+The button starts at the bottom-right anchor and snaps to the nearest anchor point whenever the user releases it.
+
+### Exclude anchors
+
+```tsx
+<FloatWrapper
+  anchorProps={{
+    shouldAnchor: true,
+    excludeAnchors: ['top-left', 'top-right'],
+  }}
+>
+  <button>Click me</button>
+</FloatWrapper>
+```
+
+The button will never snap to the top corners.
+
+### Custom anchor points
+
+```tsx
+<FloatWrapper
+  anchorProps={{
+    shouldAnchor: true,
+    customAnchors: [
+      { name: 'my-anchor', coordinates: { x: '50%', y: '75%' } },
+    ],
+  }}
+>
+  <button>Click me</button>
+</FloatWrapper>
+```
+
+Custom coordinates support `number`, `px` strings (`'100px'`), and `%` strings (`'50%'`) relative to the boundary dimensions.

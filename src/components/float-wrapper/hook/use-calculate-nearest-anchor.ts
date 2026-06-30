@@ -3,14 +3,24 @@ import type { Coordinates, ExcludeAnchorList } from "../type";
 import type { MotionValue } from "framer-motion";
 
 interface HookToNearestAnchorProps {
+  /** When `false`, `calculateClosestAnchor` returns `null` without computing. */
   shouldAnchor?: boolean;
+  /** The full set of available anchor points. Can be `null` or `undefined` before the component mounts. */
   anchorPoints: Record<string, Coordinates> | undefined | null;
+  /** Live motion values representing the element's current position. */
   motion: {
     x: MotionValue<number>;
     y: MotionValue<number>;
   };
+  /** Anchor names to exclude from the nearest-anchor calculation. */
   excludeAnchors?: ExcludeAnchorList[];
 }
+/**
+ * Returns a `calculateClosestAnchor` callback that, when called, reads the
+ * current motion position and returns the `Coordinates` of the nearest
+ * applicable anchor point. Returns `null` if `shouldAnchor` is false or no
+ * anchor points are available.
+ */
 export const useCalculateNearestAnchor = ({
   motion,
   anchorPoints,

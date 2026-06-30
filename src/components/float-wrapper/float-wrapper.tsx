@@ -26,16 +26,26 @@ import { defaultAnimate } from "./constants";
 const PADDING = 16;
 
 interface FloatWrapperProps {
+  /** The anchor point the element snaps to on mount. Falls back to `center` if the value is not found. */
   defaultPosition?: AnchorPoint | string;
+  /** Constrains drag to a viewport ref, a container `RefObject`, or an explicit Framer Motion `BoundingBox`. Defaults to the viewport. */
   dragConstraints?: Partial<BoundingBox> | RefObject<HTMLElement | null>;
   children: React.ReactNode;
+  /** Called when the user starts dragging. */
   handleStartDrag?: () => void;
+  /** Called when the user releases the drag. Fires before any snap animation. */
   handleStopDrag?: () => void;
   anchorProps?: {
+    /** When `true`, the element snaps to the nearest anchor on drag release. */
     shouldAnchor?: boolean;
+    /** Anchor points to exclude from snapping. */
     excludeAnchors?: ExcludeAnchorList[];
+    /** Additional anchor points beyond the 7 defaults. Coordinates support `number`, `px`, and `%` strings. */
     customAnchors?: CustomAnchor[];
   };
+  /** Called with `true` when a snap animation starts and `false` when it ends.
+   * Use it with any state change visuals like `disable` to prevent events from occurring while snapping is in motion
+   */
   onMovingChange?: (isMoving: boolean) => void;
 }
 
@@ -123,10 +133,6 @@ export const FloatWrapper: React.FC<FloatWrapperProps> = ({
           element,
           dragConstraints,
         });
-      console.log(`[debug] confirmed anchorpoints: `, {
-        ...anchorRecords,
-        ...convertedCustomAnchorRecords,
-      });
       setAnchorPoints({ ...anchorRecords, ...convertedCustomAnchorRecords });
     } else {
       setAnchorPoints(anchorRecords);
